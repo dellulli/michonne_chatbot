@@ -355,7 +355,7 @@ if (process.env.NODE_ENV === 'production') {
   });
 
   // SPA fallback: send index.html for any frontend route
-  app.get('*', (req, res) => {
+  app.get(/^.*$/, (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }
