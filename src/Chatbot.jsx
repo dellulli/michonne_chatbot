@@ -135,6 +135,7 @@ export default function Chatbot() {
   // Audio ref and state for love.mp3
   const audioRef = useRef(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -149,9 +150,11 @@ export default function Chatbot() {
     if (!audioRef.current) {
       audioRef.current = new Audio(`${import.meta.env.BASE_URL}assets/Chatbot/love.mp3`);
       audioRef.current.loop = true;
+      audioRef.current.muted = false;
       audioRef.current.addEventListener('play', () => setIsAudioPlaying(true));
       audioRef.current.addEventListener('pause', () => setIsAudioPlaying(false));
       audioRef.current.addEventListener('ended', () => setIsAudioPlaying(false));
+      audioRef.current.play().catch(err => console.log('Audio autostart blocked (likely needs user gesture):', err));
     }
   }, []);
 
@@ -176,8 +179,22 @@ export default function Chatbot() {
 
   // Handle input box click to play/loop audio
   const handleInputClick = () => {
-    if (audioRef.current && !isAudioPlaying) {
+    if (audioRef.current && !isAudioPlaying && !isMuted) {
       audioRef.current.play().catch(err => console.log('Audio play error:', err));
+    }
+  };
+
+  // Toggle mute without persisting across sessions
+  const toggleMute = () => {
+    if (!audioRef.current) return;
+    if (isMuted) {
+      audioRef.current.muted = false;
+      setIsMuted(false);
+      audioRef.current.play().catch(err => console.log('Audio play error:', err));
+    } else {
+      audioRef.current.muted = true;
+      audioRef.current.pause();
+      setIsMuted(true);
     }
   };
 
@@ -437,6 +454,102 @@ export default function Chatbot() {
       >
         Clear <br />Chat
       </button>
+      {/* Music sigil - floating wax seal near the katana, spins when singing */}
+      <div
+        onClick={toggleMute}
+        role="button"
+        aria-label={isMuted ? 'Unmute background music' : 'Mute background music'}
+        style={{
+          position: 'fixed',
+          top: 96,
+          right: 38,
+          width: 68,
+          height: 68,
+          zIndex: 280,
+          cursor: 'pointer',
+          userSelect: 'none',
+          transform: 'rotate(-5deg)',
+          transition: 'transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease',
+          filter: isMuted ? 'grayscale(0.35) brightness(0.9)' : 'none',
+          boxShadow: '0 12px 28px #0009',
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.transform = 'rotate(-3deg) translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 16px 32px #000b';
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.transform = 'rotate(-5deg)';
+          e.currentTarget.style.boxShadow = '0 12px 28px #0009';
+        }}
+      >
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle at 30% 30%, #7a3e34 18%, #2a1b19 55%, #0f0b0b 80%)',
+            border: '1.5px solid #b97a64',
+            boxShadow: 'inset 0 2px 10px #0009, inset 0 0 18px rgba(255,200,180,0.18)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+          }}
+        >
+          <div
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, #d8cfc6 0%, #8a6a60 58%, #2e1c18 100%)',
+              boxShadow: '0 0 12px rgba(255,220,200,0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#150d0b',
+              fontSize: 10,
+              fontWeight: 800,
+              letterSpacing: 1.1,
+              textTransform: 'uppercase',
+              animation: isMuted ? 'none' : 'sigilSpin 14s linear infinite',
+            }}
+          >
+            {isMuted ? 'hush' : 'play'}
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: -12,
+              right: 6,
+              padding: '6px 10px',
+              borderRadius: 999,
+              background: 'rgba(58,50,48,0.9)',
+              border: '1px solid #2e2827',
+              color: '#e7ddd2',
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: 0.6,
+              textTransform: 'uppercase',
+              boxShadow: '0 6px 12px #0009',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <span style={{
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              background: isMuted ? '#6f4f49' : '#e7b89a',
+              boxShadow: isMuted ? '0 0 8px rgba(111,79,73,0.4)' : '0 0 12px rgba(231,184,154,0.75)',
+            }} />
+            {isMuted ? 'muted' : 'serenade'}
+          </div>
+        </div>
+      </div>
+      <style>{`
+@keyframes sigilSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+`}</style>
       {/* Global style for hiding scrollbar and fixing header overflow */}
       <style>{globalScrollbarStyle + `.goddess-header { overflow: hidden; box-sizing: border-box; width: 100vw; }` + `\n` + `
 @keyframes petalFall {
