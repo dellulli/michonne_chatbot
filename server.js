@@ -340,14 +340,8 @@ app.post('/chat', async (req, res) => {
 if (process.env.NODE_ENV === 'production') {
   const distPath = path.join(__dirname, 'dist');
   
-  // Redirect root to the app
-  app.get('/', (req, res) => {
-    res.redirect(301, '/michonne_chatbot');
-  });
-  
-  // Serve built assets under the base path
+  // Serve built assets at root
   app.use(
-    '/michonne_chatbot',
     express.static(distPath, {
       maxAge: '1y', // cache static assets aggressively in production
       etag: true,
@@ -357,12 +351,11 @@ if (process.env.NODE_ENV === 'production') {
 
   // Redirect legacy favicon request to the built PNG asset
   app.get('/favicon.ico', (req, res) => {
-    res.redirect(302, '/michonne_chatbot/assets/favicon.png');
+    res.redirect(302, '/assets/favicon.png');
   });
 
-  // SPA fallback: send index.html for any frontend route under /michonne_chatbot
-  // Express 5 no longer supports bare "*" wildcards; use RegExp
-  app.get(/^\/michonne_chatbot(\/.*)?$/, (req, res) => {
+  // SPA fallback: send index.html for any frontend route
+  app.get('*', (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }
