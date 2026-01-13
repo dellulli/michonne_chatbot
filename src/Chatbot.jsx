@@ -454,7 +454,7 @@ export default function Chatbot() {
       >
         Clear <br />Chat
       </button>
-      {isAudioPlaying && (
+      {(isAudioPlaying || isMuted) && (
         <div
           onClick={toggleMute}
           role="button"
