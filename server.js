@@ -28,7 +28,10 @@ const openai = new OpenAI({
 // ======================
 // Conversation store
 // ======================
-const conversations = new Map(); // sessionId -> { memorySummary, messages, deletedFacts }
+const conversations = new Map(); // sessionId -> { memorySummary, messages, deletedFacts, permanentFacts }
+
+// Permanent facts that cannot be deleted
+const PERMANENT_FACTS = `Bae loves The Walking Dead, horror, and great cinema. Favourites include Kill Bill, Donnie Darko, Eternal Sunshine, Tarantino films, Breaking Bad, Dexter, The Sopranos, BoJack Horseman, and loves burgers and video games`;
 
 // ======================
 // Memory helpers
@@ -176,9 +179,15 @@ app.delete('/memory/fact', (req, res) => {
   const convo = conversations.get(String(sessionId));
   if (!convo) return res.status(404).json({ error: 'session not found' });
 
+  // Check if this fact is in permanent facts - cannot delete permanent facts
+  const normalizedFact = normalizeFact(fact);
+  const permanentNormalized = normalizeFact(PERMANENT_FACTS);
+  if (permanentNormalized.includes(normalizedFact) || normalizedFact.includes('walking dead') || normalizedFact.includes('tarantino') || normalizedFact.includes('burgers') || normalizedFact.includes('video games')) {
+    return res.status(403).json({ error: 'Cannot delete permanent facts' });
+  }
+
   // Store normalized fact as permanent tombstone to prevent re-extraction
   if (!convo.deletedFacts) convo.deletedFacts = [];
-  const normalizedFact = normalizeFact(fact);
   
   // Only add if not already in tombstone list
   if (!convo.deletedFacts.includes(normalizedFact)) {
@@ -239,6 +248,7 @@ app.post('/chat', async (req, res) => {
         memorySummary: typeof memorySummary === 'string' ? memorySummary : '',
         messages: [],
         deletedFacts: [],
+        permanentFacts: PERMANENT_FACTS,
       };
       conversations.set(id, convo);
     }
@@ -246,12 +256,17 @@ app.post('/chat', async (req, res) => {
     convo.messages.push({ role: 'user', content: message });
     const recentMessages = convo.messages.slice(-10);
 
+    // Build memory context: permanent facts + extracted facts
+    const memoryContext = convo.permanentFacts
+      ? `${convo.permanentFacts}\n${convo.memorySummary}`.trim()
+      : convo.memorySummary;
+
     const response = await openai.chat.completions.create({
       model: 'gpt-4.1-nano',
       messages: [
         { role: 'system', content: PERSONALITY_PROMPT },
-        ...(convo.memorySummary
-          ? [{ role: 'system', content: `Memory: ${convo.memorySummary}` }]
+        ...(memoryContext
+          ? [{ role: 'system', content: `Memory: ${memoryContext}` }]
           : []),
         ...recentMessages,
       ],
@@ -286,7 +301,12 @@ app.post('/chat', async (req, res) => {
         if (summary && summary.length > 0) {
           const merged = mergeFacts(convo.memorySummary, summary, convo.deletedFacts || []);
           if (merged === '__RESET_MEMORY_AND_MESSAGES__') {
-            conversations.set(id, { memorySummary: '', messages: [], deletedFacts: [] });
+            conversations.set(id, { 
+              memorySummary: '', 
+              messages: [], 
+              deletedFacts: [],
+              permanentFacts: PERMANENT_FACTS,
+            });
           } else {
             convo.memorySummary = merged;
             
