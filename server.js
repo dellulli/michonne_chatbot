@@ -295,7 +295,7 @@ app.post('/chat', async (req, res) => {
 });
 
 /* ==========================================
-   PRODUCTION: SERVE VITE FRONTEND UNDER "/memory-room"
+   PRODUCTION: SERVE VITE FRONTEND UNDER "/michonne_chatbot"
 ========================================== */
 
 if (process.env.NODE_ENV === 'production') {
@@ -303,12 +303,12 @@ if (process.env.NODE_ENV === 'production') {
   
   // Redirect root to the app
   app.get('/', (req, res) => {
-    res.redirect(301, '/memory-room');
+    res.redirect(301, '/michonne_chatbot');
   });
   
   // Serve built assets under the base path
   app.use(
-    '/memory-room',
+    '/michonne_chatbot',
     express.static(distPath, {
       maxAge: '1y', // cache static assets aggressively in production
       etag: true,
@@ -318,12 +318,12 @@ if (process.env.NODE_ENV === 'production') {
 
   // Redirect legacy favicon request to the built PNG asset
   app.get('/favicon.ico', (req, res) => {
-    res.redirect(302, '/memory-room/assets/favicon.png');
+    res.redirect(302, '/michonne_chatbot/assets/favicon.png');
   });
 
-  // SPA fallback: send index.html for any frontend route under /memory-room
+  // SPA fallback: send index.html for any frontend route under /michonne_chatbot
   // Express 5 no longer supports bare "*" wildcards; use RegExp
-  app.get(/^\/memory-room(\/.*)?$/, (req, res) => {
+  app.get(/^\/michonne_chatbot(\/.*)?$/, (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }
