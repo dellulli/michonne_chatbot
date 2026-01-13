@@ -197,6 +197,25 @@ app.delete('/memory/fact', (req, res) => {
   });
 
   convo.memorySummary = filtered.join('\n');
+  
+  // Extract keywords from the fact (simple approach, no AI needed)
+  const stopWords = ['the', 'a', 'an', 'is', 'was', 'are', 'were', 'luke', 'has', 'had', 'will', 'would', 'could', 'should', 'to', 'from', 'in', 'on', 'at', 'for', 'with', 'about'];
+  const keywords = fact.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .split(/\s+/)
+    .filter(word => word.length > 2 && !stopWords.includes(word));
+  
+  // Remove messages containing these keywords from conversation history
+  if (keywords.length > 0 && convo.messages) {
+    const beforeCount = convo.messages.length;
+    convo.messages = convo.messages.filter(msg => {
+      const msgLower = msg.content.toLowerCase();
+      // Keep message if it doesn't contain any of the keywords
+      return !keywords.some(keyword => msgLower.includes(keyword));
+    });
+    console.log(`Removed ${beforeCount - convo.messages.length} messages containing keywords:`, keywords);
+  }
+  
   console.log('After delete:', convo.memorySummary);
   console.log('Tombstone list:', convo.deletedFacts);
   conversations.set(String(sessionId), convo);
