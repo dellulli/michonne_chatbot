@@ -129,6 +129,8 @@ export default function Chatbot() {
     return localStorage.getItem('chat:memorySent') === '1';
   });
 
+  const [newFactInput, setNewFactInput] = useState('');
+
   // Track scroll position for header background
   const [scrolled, setScrolled] = useState(false);
   const inputRef = useRef(null);
@@ -342,6 +344,29 @@ export default function Chatbot() {
     } catch (error) {
       console.error('Error clearing memory:', error);
       alert('Failed to clear memory: ' + error.message);
+    }
+  };
+
+  const addFact = async () => {
+    if (!newFactInput.trim()) return;
+    
+    try {
+      const response = await fetch(`${API_URL}/memory/fact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: conversationId, fact: newFactInput.trim() }),
+      });
+      if (!response.ok) throw new Error('Failed to add fact');
+      
+      // Update memory data with new fact
+      const updatedSummary = memoryData.memorySummary 
+        ? memoryData.memorySummary + '\n' + newFactInput.trim()
+        : newFactInput.trim();
+      setMemoryData({ ...memoryData, memorySummary: updatedSummary });
+      setNewFactInput('');
+    } catch (error) {
+      console.error('Error adding fact:', error);
+      alert('Failed to add fact: ' + error.message);
     }
   };
 
@@ -922,6 +947,63 @@ CHATBOT
                 </div>
 
 
+
+                {/* Add new fact input */}
+                <div style={{ marginBottom: '16px' }}>
+                  <h3 style={{ margin: '0 0 8px 0', fontSize: 14, fontWeight: 600, color: '#a6a1a1' }}>Add a Stored Fact</h3>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text"
+                      placeholder="e.g. refer to me as your eternal sunshine"
+                      value={newFactInput}
+                      onChange={(e) => setNewFactInput(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          addFact();
+                        }
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '10px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid #2e2827',
+                        backgroundColor: '#1e1a19',
+                        color: '#d8cfc6',
+                        fontSize: 14,
+                        outline: 'none',
+                      }}
+                    />
+                    <button
+                      onClick={addFact}
+                      disabled={!newFactInput.trim()}
+                      style={{
+                        padding: '10px 16px',
+                        borderRadius: '6px',
+                        border: '1px solid #2e2827',
+                        backgroundColor: newFactInput.trim() ? '#3a3a38' : '#2e2726',
+                        color: newFactInput.trim() ? '#d8cfc6' : '#8a8a82',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: newFactInput.trim() ? 'pointer' : 'not-allowed',
+                        outline: 'none',
+                        transition: 'background 0.18s',
+                      }}
+                      onMouseDown={e => e.currentTarget.blur()}
+                      onMouseOver={e => {
+                        if (newFactInput.trim()) {
+                          e.currentTarget.style.backgroundColor = '#4a4945';
+                        }
+                      }}
+                      onMouseOut={e => {
+                        if (newFactInput.trim()) {
+                          e.currentTarget.style.backgroundColor = '#3a3a38';
+                        }
+                      }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
 
                 <button
                   onClick={() => {
