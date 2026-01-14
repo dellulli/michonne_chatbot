@@ -234,6 +234,37 @@ app.delete('/memory/fact', (req, res) => {
 });
 
 // ======================
+// Add single fact manually
+// ======================
+app.post('/memory/fact', (req, res) => {
+  const { sessionId, fact } = req.body;
+  if (!sessionId || !fact) {
+    return res.status(400).json({ error: 'sessionId and fact are required' });
+  }
+
+  let convo = conversations.get(String(sessionId));
+  if (!convo) {
+    convo = {
+      memorySummary: '',
+      messages: [],
+      deletedFacts: [],
+      permanentFacts: PERMANENT_FACTS,
+    };
+  }
+
+  // Add the fact to memory summary
+  if (convo.memorySummary && convo.memorySummary.trim()) {
+    convo.memorySummary = convo.memorySummary.trim() + '\n' + fact.trim();
+  } else {
+    convo.memorySummary = fact.trim();
+  }
+
+  conversations.set(String(sessionId), convo);
+  
+  res.json({ success: true, memorySummary: convo.memorySummary });
+});
+
+// ======================
 // Chat endpoint
 // ======================
 app.post('/chat', async (req, res) => {

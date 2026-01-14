@@ -954,7 +954,7 @@ CHATBOT
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <input
                       type="text"
-                      placeholder="e.g. refer to me as your eternal sunshine"
+                      placeholder="e.g. always call me 'amazing piece of art stunning daddy'"
                       value={newFactInput}
                       onChange={(e) => setNewFactInput(e.target.value)}
                       onKeyPress={(e) => {
