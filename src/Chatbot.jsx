@@ -358,10 +358,14 @@ export default function Chatbot() {
       });
       if (!response.ok) throw new Error('Failed to add fact');
       
-      // Update memory data with new fact
-      const updatedSummary = memoryData.memorySummary 
-        ? memoryData.memorySummary + '\n' + newFactInput.trim()
-        : newFactInput.trim();
+      // Update memory data with new fact, handling empty/placeholder state
+      const currentSummary = memoryData.memorySummary;
+      const isEmptyOrPlaceholder = !currentSummary || currentSummary.trim() === '' || currentSummary === 'no memories yet, lets talk so we can create some 😉';
+      
+      const updatedSummary = isEmptyOrPlaceholder
+        ? newFactInput.trim()
+        : currentSummary + '\n' + newFactInput.trim();
+      
       setMemoryData({ ...memoryData, memorySummary: updatedSummary });
       setNewFactInput('');
     } catch (error) {
@@ -900,7 +904,7 @@ CHATBOT
                     }
                   </h3>
                   <div style={{ padding: '12px', backgroundColor: '#1e1a19ff', borderRadius: '8px', fontSize: 14, lineHeight: 1.6 }}>
-                    {memoryData.memorySummary && memoryData.memorySummary.trim() !== ''
+                    {memoryData.memorySummary && memoryData.memorySummary.trim() !== '' && memoryData.memorySummary !== 'no memories yet, lets talk so we can create some 😉'
                       ? memoryData.memorySummary.split(/\n|\r|\r\n/).map((fact, idx, arr) => {
                           const replacedFact = fact.replace(/luke/gi, 'Bae');
                           return fact.trim() && (

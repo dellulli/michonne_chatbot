@@ -93,15 +93,17 @@ function mergeFacts(existingSummary, incomingSummary, deletedFacts = []) {
     return deletedFacts.some(tombstone => tombstone === norm);
   };
 
-  // Filter out generic facts and tombstoned facts from both sources
-  const existingFacts = splitFacts(existingSummary).filter(f => !isGenericFact(f) && !isDeletedFact(f));
+  // Filter existing facts - only apply isGenericFact filter to incoming facts
+  // Existing facts should stay unless they're tombstoned (were explicitly deleted)
+  const existingFacts = splitFacts(existingSummary).filter(f => !isDeletedFact(f));
+  // Incoming facts should be filtered for both generic patterns and tombstones
   const incomingFacts = splitFacts(incomingSummary).filter(f => !isGenericFact(f) && !isDeletedFact(f));
 
   const seen = new Set();
   const merged = [];
 
-  // Merge incoming first (prioritize new facts), then existing
-  for (const f of [...incomingFacts, ...existingFacts]) {
+  // Merge existing first (prioritize manually added/existing facts), then incoming
+  for (const f of [...existingFacts, ...incomingFacts]) {
     const key = normalizeFact(f);
     if (!key || seen.has(key)) continue;
     seen.add(key);
