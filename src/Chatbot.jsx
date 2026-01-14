@@ -337,9 +337,7 @@ export default function Chatbot() {
       });
       if (!response.ok) throw new Error('Failed to clear memory');
       
-      // Also clear frontend messages to match backend
-      setMessages(OPENING_MESSAGES);
-      
+      // Clear only the memory data, not the chat history
       await fetchMemory(); // Refresh
     } catch (error) {
       console.error('Error clearing memory:', error);
